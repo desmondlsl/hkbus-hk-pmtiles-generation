@@ -220,3 +220,4 @@ jobs:
           folder: _site
           branch: gh-pages
           single-commit: true
+          lfs: true
