@@ -208,11 +208,17 @@ jobs:
       - name: prepare artifact directory
         run: |
           mkdir -p _site
+          cp .gitattributes _site/.gitattributes
           [ -f vector-tiles/hong-kong.pmtiles ] && mv vector-tiles/hong-kong.pmtiles _site/hong-kong.pmtiles || true
           [ -f vector-tiles/hong-kong-labels.pmtiles ] && mv vector-tiles/hong-kong-labels.pmtiles _site/hong-kong-labels.pmtiles || true
           [ -f raster-tiles-light/hong-kong-raster.pmtiles ] && mv raster-tiles-light/hong-kong-raster.pmtiles _site/hong-kong-raster.pmtiles || true
           [ -f raster-tiles-dark/hong-kong-raster-dark.pmtiles ] && mv raster-tiles-dark/hong-kong-raster-dark.pmtiles _site/hong-kong-raster-dark.pmtiles || true
           echo "pmtiles.hkbus.app" > _site/CNAME
+
+      - name: verify LFS tracking
+        run: |
+          git lfs version
+          git check-attr filter -- _site/hong-kong-raster.pmtiles _site/hong-kong-raster-dark.pmtiles
 
       - name: deploy to gh-pages branch
         uses: JamesIves/github-pages-deploy-action@v4
