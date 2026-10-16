@@ -37,12 +37,12 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-
       - name: protomaps basemaps repo
         run: |
-          git clone https://github.com/protomaps/basemaps.git
+          git clone --depth=1 --filter=blob:none --sparse https://github.com/protomaps/basemaps.git
+          cd basemaps
+          git sparse-checkout set tiles
+          cd ..
 
       - name: download osm
         run: |
@@ -56,7 +56,7 @@ jobs:
           wget -c --tries=5 https://qrank.toolforge.org/download/qrank.csv.gz -O data/sources/qrank.csv.gz
 
       - name: setup java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -80,7 +80,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y tippecanoe && tile-join -l places -l pois -l roads -o hong-kong-labels.pmtiles hong-kong.pmtiles
 
       - name: upload vector artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vector-tiles
           path: |
@@ -95,10 +95,10 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: download vector artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: vector-tiles
 
@@ -127,15 +127,15 @@ jobs:
 
       - name: download pmtiles cli
         run: |
-          wget https://github.com/protomaps/go-pmtiles/releases/download/v1.28.2/go-pmtiles_1.28.2_Linux_x86_64.tar.gz
-          tar -xzf go-pmtiles_1.28.2_Linux_x86_64.tar.gz
+          wget https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Linux_x86_64.tar.gz
+          tar -xzf go-pmtiles_1.31.2_Linux_x86_64.tar.gz
           chmod +x pmtiles
 
       - name: convert mbtiles to pmtiles
         run: ./pmtiles convert hong-kong-raster.mbtiles hong-kong-raster.pmtiles
 
       - name: upload raster artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: raster-tiles-light
           path: hong-kong-raster.pmtiles
@@ -148,10 +148,10 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: download vector artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: vector-tiles
 
@@ -180,15 +180,15 @@ jobs:
 
       - name: download pmtiles cli
         run: |
-          wget https://github.com/protomaps/go-pmtiles/releases/download/v1.28.2/go-pmtiles_1.28.2_Linux_x86_64.tar.gz
-          tar -xzf go-pmtiles_1.28.2_Linux_x86_64.tar.gz
+          wget https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Linux_x86_64.tar.gz
+          tar -xzf go-pmtiles_1.31.2_Linux_x86_64.tar.gz
           chmod +x pmtiles
 
       - name: convert mbtiles to pmtiles
         run: ./pmtiles convert hong-kong-raster-dark.mbtiles hong-kong-raster-dark.pmtiles
 
       - name: upload raster artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: raster-tiles-dark
           path: hong-kong-raster-dark.pmtiles
@@ -200,18 +200,18 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
 
       - name: prepare artifact directory
         run: |
           mkdir -p _site
-          [ -f vector-tiles/hong-kong.pmtiles ] && mv vector-tiles/hong-kong.pmtiles _site/hong-kong.pmtiles || true
-          [ -f vector-tiles/hong-kong-labels.pmtiles ] && mv vector-tiles/hong-kong-labels.pmtiles _site/hong-kong-labels.pmtiles || true
-          [ -f raster-tiles-light/hong-kong-raster.pmtiles ] && mv raster-tiles-light/hong-kong-raster.pmtiles _site/hong-kong-raster.pmtiles || true
-          [ -f raster-tiles-dark/hong-kong-raster-dark.pmtiles ] && mv raster-tiles-dark/hong-kong-raster-dark.pmtiles _site/hong-kong-raster-dark.pmtiles || true
+          [ -f hong-kong.pmtiles ] && mv hong-kong.pmtiles _site/hong-kong.pmtiles || true
+          [ -f hong-kong-labels.pmtiles ] && mv hong-kong-labels.pmtiles _site/hong-kong-labels.pmtiles || true
+          [ -f hong-kong-raster.pmtiles ] && mv hong-kong-raster.pmtiles _site/hong-kong-raster.pmtiles || true
+          [ -f hong-kong-raster-dark.pmtiles ] && mv hong-kong-raster-dark.pmtiles _site/hong-kong-raster-dark.pmtiles || true
           echo "pmtiles.hkbus.app" > _site/CNAME
 
       - name: deploy to gh-pages branch
