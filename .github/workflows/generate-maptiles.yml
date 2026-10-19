@@ -134,11 +134,20 @@ jobs:
       - name: convert mbtiles to pmtiles
         run: ./pmtiles convert hong-kong-raster.mbtiles hong-kong-raster.pmtiles
 
+      - name: split raster pmtiles by zoom
+        run: |
+          ./pmtiles extract hong-kong-raster.pmtiles hong-kong-raster-z0-15.pmtiles --maxzoom=15
+          ./pmtiles extract hong-kong-raster.pmtiles hong-kong-raster-z16.pmtiles --minzoom=16 --maxzoom=16
+          ./pmtiles extract hong-kong-raster.pmtiles hong-kong-raster-z17.pmtiles --minzoom=17 --maxzoom=17
+
       - name: upload raster artifact
         uses: actions/upload-artifact@v4
         with:
           name: raster-tiles-light
-          path: hong-kong-raster.pmtiles
+          path: |
+            hong-kong-raster-z0-15.pmtiles
+            hong-kong-raster-z16.pmtiles
+            hong-kong-raster-z17.pmtiles
 
   build-raster-dark:
     if: (github.event_name == 'schedule' && vars.CRON_BUILD_RASTER_DARK != 'false' || inputs.build_raster_dark == true) && (github.event_name == 'schedule' && vars.CRON_BUILD_VECTOR != 'false' || inputs.build_vector == true)
@@ -187,11 +196,20 @@ jobs:
       - name: convert mbtiles to pmtiles
         run: ./pmtiles convert hong-kong-raster-dark.mbtiles hong-kong-raster-dark.pmtiles
 
+      - name: split raster pmtiles by zoom
+        run: |
+          ./pmtiles extract hong-kong-raster-dark.pmtiles hong-kong-raster-dark-z0-15.pmtiles --maxzoom=15
+          ./pmtiles extract hong-kong-raster-dark.pmtiles hong-kong-raster-dark-z16.pmtiles --minzoom=16 --maxzoom=16
+          ./pmtiles extract hong-kong-raster-dark.pmtiles hong-kong-raster-dark-z17.pmtiles --minzoom=17 --maxzoom=17
+
       - name: upload raster artifact
         uses: actions/upload-artifact@v4
         with:
           name: raster-tiles-dark
-          path: hong-kong-raster-dark.pmtiles
+          path: |
+            hong-kong-raster-dark-z0-15.pmtiles
+            hong-kong-raster-dark-z16.pmtiles
+            hong-kong-raster-dark-z17.pmtiles
 
   deploy:
     if: always() && (needs.build-vector.result == 'success' || needs.build-raster-light.result == 'success' || needs.build-raster-dark.result == 'success')
@@ -210,8 +228,7 @@ jobs:
           mkdir -p _site
           [ -f vector-tiles/hong-kong.pmtiles ] && mv vector-tiles/hong-kong.pmtiles _site/hong-kong.pmtiles || true
           [ -f vector-tiles/hong-kong-labels.pmtiles ] && mv vector-tiles/hong-kong-labels.pmtiles _site/hong-kong-labels.pmtiles || true
-          [ -f raster-tiles-light/hong-kong-raster.pmtiles ] && mv raster-tiles-light/hong-kong-raster.pmtiles _site/hong-kong-raster.pmtiles || true
-          [ -f raster-tiles-dark/hong-kong-raster-dark.pmtiles ] && mv raster-tiles-dark/hong-kong-raster-dark.pmtiles _site/hong-kong-raster-dark.pmtiles || true
+          for f in raster-tiles-light/*.pmtiles raster-tiles-dark/*.pmtiles; do [ -f "$f" ] && mv "$f" _site/ || true; done
           echo "pmtiles.hkbus.app" > _site/CNAME
 
       - name: deploy to gh-pages branch
